@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from db import collection
+from operations import add_student, get_all_students   # ✅ changed
 
 app = FastAPI()
 
@@ -15,23 +15,15 @@ app.add_middleware(
 
 # ✅ Add student
 @app.post("/student")
-def add_student(data: dict):
-    collection.insert_one(data)
-    return {"message": "Student added"}
+def add_student_api(data: dict):
+    return add_student(data["name"], data["subject"], data["marks"])
+
 
 # ✅ Get ALL students
 @app.get("/students")
-def get_students():
-    students = []
+def get_students_api():
+    return get_all_students()
 
-    data = list(collection.find())
-    print("🔥 TOTAL FROM DB:", len(data))   # DEBUG
-
-    for student in data:
-        student["_id"] = str(student["_id"])
-        students.append(student)
-
-    return students
 
 # ✅ Root
 @app.get("/")

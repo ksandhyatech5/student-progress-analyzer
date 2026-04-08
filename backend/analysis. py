@@ -1,0 +1,77 @@
+from db.mongodb import connect_db
+
+
+# Get collection
+def get_collection():
+    db = connect_db()
+    return db["students"]
+
+
+# 1. Average Marks
+def get_average_marks():
+    collection = get_collection()
+    
+    result = list(collection.aggregate([
+        {
+            "$group": {
+                "_id": None,
+                "average_marks": {"$avg": "$marks"}
+            }
+        }
+    ]))
+    
+    return round(result[0]["average_marks"], 2) if result else 0
+
+
+# 2. Top Students Count (marks >= 75)
+def get_top_students_count():
+    collection = get_collection()
+    return collection.count_documents({"marks": {"$gte": 75}})
+
+
+# 3. Weak Students Count (marks < 40)
+def get_weak_students_count():
+    collection = get_collection()
+    return collection.count_documents({"marks": {"$lt": 40}})
+
+
+# 4. Subject-wise Average (for bar chart)
+def get_subject_wise_average():
+    collection = get_collection()
+    
+    result = list(collection.aggregate([
+        {
+            "$group": {
+                "_id": "$subject",
+                "average_marks": {"$avg": "$marks"}
+            }
+        }
+    ]))
+    
+    data = {}
+    for item in result:
+        data[item["_id"]] = round(item["average_marks"], 2)
+    
+    return data
+
+
+# 5. Pass vs Fail (for pie chart)
+def get_pass_fail_data():
+    collection = get_collection()
+    
+    pass_count = collection.count_documents({"marks": {"$gte": 40}})
+    fail_count = collection.count_documents({"marks": {"$lt": 40}})
+    
+    return {
+        "pass": pass_count,
+        "fail": fail_count
+    }
+
+
+# 🔍 Optional: Test your analytics file
+if __name__ == "__main__":
+    print("Average Marks:", get_average_marks())
+    print("Top Students:", get_top_students_count())
+    print("Weak Students:", get_weak_students_count())
+    print("Subject Wise Avg:", get_subject_wise_average())
+    print("Pass/Fail:", get_pass_fail_data())
